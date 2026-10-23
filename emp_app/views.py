@@ -1,17 +1,49 @@
 from django.shortcuts import render, redirect
 from .models import Employee, Role, Department
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
-
+@login_required(login_url='/login/')
 def index(request):
     return render(request, 'index.html')
 
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('/')
 
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if user is not None:
+            login(request, user)
+            return redirect('/')
+
+        messages.error(request, 'Invalid username or password.')
+
+    return render(request, 'login.html')
+
+
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        return redirect('/login/')
+
+    return redirect('/')
+@login_required(login_url='/login/')
 def all_emp(request):
     emps = Employee.objects.all()
     context = {'emps': emps}
     return render(request, 'all_emp.html', context)
 
-
+@login_required(login_url='/login/')
 def add_emp(request):
 
     if request.method == 'POST':
@@ -51,7 +83,7 @@ def add_emp(request):
 
         return render(request, 'add_emp.html', context)
 
-
+@login_required(login_url='/login/')
 def remove_emp(request):
     if request.method == 'POST':
 
@@ -66,7 +98,7 @@ def remove_emp(request):
     else:
         return render(request, 'remove_emp.html')
 
-
+@login_required(login_url='/login/')
 def filter_emp(request):
     if request.method == 'POST':
 
